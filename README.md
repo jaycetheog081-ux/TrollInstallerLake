@@ -9,7 +9,7 @@ TrollInstallerX is a universal TrollStore installer. It focuses on being extreme
 TrollInstallerX supports all devices running iOS 14.0 - 16.6.1, both arm64 and arm64e. It makes use of one of two different methods to install TrollStore, depending on what device and iOS you have. These methods are:
 
 * **Direct installation**: using the [Darksword](https://github.com/opa334/darksword-kexploit) kernel exploit, along with the [Momentarius](https://github.com/staturnzz/momentarius) PPL bypass on devices using the A12 - A13 chip, and the [Titan]
-(https://github.com/jaycetheog081-ux/TrollInstallerLake) SPTM bypass for A15+ chips. TrollInstallerX can install both TrollStore and its persistence helper directly onto the device without having to leave the installer.
+(https://github.com/alfiecg24/Titan) SPTM bypass for A15+ chips. TrollInstallerX can install both TrollStore and its persistence helper directly onto the device without having to leave the installer.
   * Supports iOS 14.0 - 16.6.1 (arm64) and iOS 14.0 - 16.5.1 (arm64e).
     * **Note**: A15, A16, and M2 devices on iOS 16.5.1 do not support this method.
     * **Note**: A8 devices are only supported on iOS 14.0 - 15.1 for the time being.
