@@ -1,0 +1,90 @@
+name: Build TrollInstallerLake
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build IPA
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Install build dependencies
+        run: |
+          brew update
+          brew install xcodegen ldid
+
+      - name: Generate Xcode project
+        run: |
+          xcodegen generate --spec project.yml
+
+      - name: Build application
+        run: |
+          xcodebuild \
+            -project TrollInstallerLake.xcodeproj \
+            -scheme TrollInstallerLake \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        run: |
+          set -e
+
+          APP_PATH="DerivedData/Build/Products/Release-iphoneos/TrollInstallerLake.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "ERROR: Application bundle not found."
+            exit 1
+          fi
+
+          if [ ! -f "Resources/ents.plist" ]; then
+            echo "ERROR: Resources/ents.plist not found."
+            exit 1
+          fi
+
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+
+          EXECUTABLE=$(/usr/libexec/PlistBuddy \
+            -c "Print :CFBundleExecutable" \
+            "$APP_PATH/Info.plist")
+
+          if [ -z "$EXECUTABLE" ] || [ ! -f "$APP_PATH/$EXECUTABLE" ]; then
+            echo "ERROR: Application executable not found."
+            exit 1
+          fi
+
+          ldid -SResources/ents.plist "$APP_PATH/$EXECUTABLE"
+
+          zip -qry TrollInstallerLake.ipa Payload
+
+          rm -rf Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrollInstallerLake-IPA
+          path: TrollInstallerLake.ipa
+          if-no-files-found: error
+          retention-days: 14
