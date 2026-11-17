@@ -51,7 +51,6 @@ func getKernel(_ device: Device) -> Bool {
 
 
 func cleanupPrivatePreboot() -> Bool {
-    // Remove /private/preboot/tmp
     let fileManager = FileManager.default
     do {
         try fileManager.removeItem(atPath: "/private/preboot/tmp")
@@ -63,7 +62,16 @@ func cleanupPrivatePreboot() -> Bool {
 }
 
 func selectExploit(_ device: Device) -> KernelExploit {
-    let flavour = (TIXDefaults().string(forKey: "exploitFlavour") ?? (physpuppet.supports(device) ? "physpuppet" : "landa"))
+    let defaultFlavour: String
+    if darksword.supports(device) {
+        defaultFlavour = "darksword"
+    } else if physpuppet.supports(device) {
+        defaultFlavour = "physpuppet"
+    } else {
+        defaultFlavour = "landa"
+    }
+    let flavour = TIXDefaults().string(forKey: "exploitFlavour") ?? defaultFlavour
+    if flavour == "darksword" { return darksword }
     if flavour == "landa" { return landa }
     if flavour == "physpuppet" { return physpuppet }
     if flavour == "smith" { return smith }
@@ -181,7 +189,6 @@ func doDirectInstall(_ device: Device) async -> Bool {
         }
     }
     
-    // Prevents download finishing between extraction and installation
     let useLocalCopy = FileManager.default.fileExists(atPath: "/private/preboot/tmp/TrollStore.tar")
 
     if !fileManager.fileExists(atPath: "/private/preboot/tmp/trollstorehelper") {
