@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Select Xcode
         run: |
@@ -29,6 +31,47 @@ jobs:
         run: |
           brew update
           brew install xcodegen ldid
+
+      - name: Clone Titan
+        run: |
+          git clone --recurse-submodules https://github.com/alfiecg24/Titan /tmp/Titan
+
+      - name: Build Titan
+        run: |
+          cd /tmp/Titan
+          xcodebuild \
+            -scheme Titan \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+          # Copy .a and header into TrollInstallerLake
+          find DerivedData -name "libTitan.a" | head -1 | xargs -I{} cp {} $GITHUB_WORKSPACE/TrollInstallerX/External/lib/
+          mkdir -p $GITHUB_WORKSPACE/TrollInstallerX/External/include/Titan
+          find . -path "*/Titan/*.h" | head -1 | xargs -I{} cp {} $GITHUB_WORKSPACE/TrollInstallerX/External/include/Titan/
+
+      - name: Clone Momentarius
+        run: |
+          git clone --recurse-submodules https://github.com/staturnzz/momentarius /tmp/momentarius
+
+      - name: Build Momentarius
+        run: |
+          cd /tmp/momentarius
+          xcodebuild \
+            -scheme momentarius \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+          find DerivedData -name "libmomentarius.a" | head -1 | xargs -I{} cp {} $GITHUB_WORKSPACE/TrollInstallerX/External/lib/
+          mkdir -p $GITHUB_WORKSPACE/TrollInstallerX/External/include/Momentarius
+          find . -path "*/momentarius/*.h" | head -1 | xargs -I{} cp {} $GITHUB_WORKSPACE/TrollInstallerX/External/include/Momentarius/
 
       - name: Generate Xcode project
         run: |
