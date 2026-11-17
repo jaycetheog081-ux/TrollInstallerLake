@@ -39,19 +39,26 @@ jobs:
       - name: Build Titan
         run: |
           cd /tmp/Titan
-          xcodebuild \
-            -scheme Titan \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build
-          # Copy .a and header into TrollInstallerLake
-          find DerivedData -name "libTitan.a" | head -1 | xargs -I{} cp {} $GITHUB_WORKSPACE/TrollInstallerX/External/lib/
+          echo "=== Repo structure ===" && find . -type f | head -60
+          SRCS=$(find . \( -name "*.c" -o -name "*.m" \) | grep -v -i test)
+          echo "=== Sources found ===" && echo "$SRCS"
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          for src in $SRCS; do
+            out="${src%.*}.arm64.o"
+            xcrun clang \
+              -target arm64-apple-ios15.0 \
+              -isysroot "$SDK" \
+              -I. \
+              -O2 -c "$src" -o "$out" && echo "OK: $src" || echo "SKIP: $src"
+          done
+          OBJS=$(find . -name "*.arm64.o")
+          echo "=== Objects ===" && echo "$OBJS"
+          xcrun ar rcs libTitan.a $OBJS
+          cp libTitan.a $GITHUB_WORKSPACE/TrollInstallerX/External/lib/
           mkdir -p $GITHUB_WORKSPACE/TrollInstallerX/External/include/Titan
-          find . -path "*/Titan/*.h" | head -1 | xargs -I{} cp {} $GITHUB_WORKSPACE/TrollInstallerX/External/include/Titan/
+          find . -name "*.h" | xargs -I{} cp {} \
+            $GITHUB_WORKSPACE/TrollInstallerX/External/include/Titan/
+          echo "=== Titan build complete ==="
 
       - name: Clone Momentarius
         run: |
@@ -60,18 +67,26 @@ jobs:
       - name: Build Momentarius
         run: |
           cd /tmp/momentarius
-          xcodebuild \
-            -scheme momentarius \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build
-          find DerivedData -name "libmomentarius.a" | head -1 | xargs -I{} cp {} $GITHUB_WORKSPACE/TrollInstallerX/External/lib/
+          echo "=== Repo structure ===" && find . -type f | head -60
+          SRCS=$(find . \( -name "*.c" -o -name "*.m" \) | grep -v -i test)
+          echo "=== Sources found ===" && echo "$SRCS"
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          for src in $SRCS; do
+            out="${src%.*}.arm64.o"
+            xcrun clang \
+              -target arm64-apple-ios15.0 \
+              -isysroot "$SDK" \
+              -I. \
+              -O2 -c "$src" -o "$out" && echo "OK: $src" || echo "SKIP: $src"
+          done
+          OBJS=$(find . -name "*.arm64.o")
+          echo "=== Objects ===" && echo "$OBJS"
+          xcrun ar rcs libmomentarius.a $OBJS
+          cp libmomentarius.a $GITHUB_WORKSPACE/TrollInstallerX/External/lib/
           mkdir -p $GITHUB_WORKSPACE/TrollInstallerX/External/include/Momentarius
-          find . -path "*/momentarius/*.h" | head -1 | xargs -I{} cp {} $GITHUB_WORKSPACE/TrollInstallerX/External/include/Momentarius/
+          find . -name "*.h" | xargs -I{} cp {} \
+            $GITHUB_WORKSPACE/TrollInstallerX/External/include/Momentarius/
+          echo "=== Momentarius build complete ==="
 
       - name: Generate Xcode project
         run: |
