@@ -8,12 +8,23 @@
 import SwiftUI
 
 struct SettingsView: View {
-    
+
     let device: Device
-    
+
     @AppStorage("exploitFlavour", store: TIXDefaults()) var exploitFlavour: String = ""
     @AppStorage("verbose", store: TIXDefaults()) var verbose: Bool = false
-    
+
+    // Human-readable label for the active PPL bypass
+    var pplBypassLabel: String {
+        if device.isArm64e {
+            if device.isMomentariusDevice { return "momentarius (A12–A13)" }
+            if titan.supports(device)     { return "titan" }
+            if dmaFail.supports(device)   { return "dmaFail" }
+            return "none"
+        }
+        return "n/a (arm64)"
+    }
+
     var body: some View {
         VStack(spacing: 10) {
             Button(action: {
@@ -34,8 +45,12 @@ struct SettingsView: View {
                 }
             })
             .padding()
-            if smith.supports(device) || physpuppet.supports(device) {
+
+            if darksword.supports(device) || smith.supports(device) || physpuppet.supports(device) {
                 Picker("Kernel exploit", selection: $exploitFlavour) {
+                    if darksword.supports(device) {
+                        Text("darksword").foregroundColor(.white).tag("darksword")
+                    }
                     Text("landa").foregroundColor(.white).tag("landa")
                     if smith.supports(device) {
                         Text("smith").foregroundColor(.white).tag("smith")
@@ -48,6 +63,15 @@ struct SettingsView: View {
                 .colorMultiply(.white)
                 .padding()
             }
+
+            // PPL bypass is auto-selected; show which one will be used
+            if device.isArm64e {
+                Text("PPL bypass: \(pplBypassLabel)")
+                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.horizontal)
+            }
+
             VStack {
                 Toggle(isOn: $verbose, label: {
                     Text("Verbose logging")
@@ -56,11 +80,16 @@ struct SettingsView: View {
                 })
             }
             .padding()
-            
         }
         .onAppear {
             if exploitFlavour == "" {
-                exploitFlavour = physpuppet.supports(device) ? "physpuppet" : "landa"
+                if darksword.supports(device) {
+                    exploitFlavour = "darksword"
+                } else if physpuppet.supports(device) {
+                    exploitFlavour = "physpuppet"
+                } else {
+                    exploitFlavour = "landa"
+                }
             }
         }
     }
