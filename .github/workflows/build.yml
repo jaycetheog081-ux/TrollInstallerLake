@@ -40,11 +40,12 @@ jobs:
         run: |
           cd /tmp/Titan
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          LJB=$GITHUB_WORKSPACE/TrollInstallerX/External/include
           echo "=== Full tree ===" && find . -not -path "./.git/*" -type f
           SRCS=$(find . -not -path "./.git/*" \( -name "*.c" -o -name "*.m" \))
           echo "=== Sources ===" && echo "$SRCS"
           INCS=$(find . -not -path "./.git/*" -name "*.h" -exec dirname {} \; | sort -u)
-          IFLAGS=""
+          IFLAGS="-I$LJB"
           for inc in $INCS; do IFLAGS="$IFLAGS -I$inc"; done
           echo "=== Include flags ===" && echo "$IFLAGS"
           COMPILED=0
@@ -79,11 +80,12 @@ jobs:
         run: |
           cd /tmp/momentarius
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          LJB=$GITHUB_WORKSPACE/TrollInstallerX/External/include
           echo "=== Full tree ===" && find . -not -path "./.git/*" -type f
           SRCS=$(find . -not -path "./.git/*" \( -name "*.c" -o -name "*.m" \))
           echo "=== Sources ===" && echo "$SRCS"
           INCS=$(find . -not -path "./.git/*" -name "*.h" -exec dirname {} \; | sort -u)
-          IFLAGS=""
+          IFLAGS="-I$LJB"
           for inc in $INCS; do IFLAGS="$IFLAGS -I$inc"; done
           echo "=== Include flags ===" && echo "$IFLAGS"
           COMPILED=0
