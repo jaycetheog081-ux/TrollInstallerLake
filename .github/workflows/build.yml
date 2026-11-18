@@ -39,30 +39,35 @@ jobs:
       - name: Build Titan
         run: |
           cd /tmp/Titan
-          echo "=== Repo structure ===" && find . -type f | grep -v ".git" | head -60
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
-          SRCS=$(find ./src -name "*.c" -o -name "*.m" 2>/dev/null || find . -name "*.c" -o -name "*.m" | grep -v ".git")
+          echo "=== Full tree ===" && find . -not -path "./.git/*" -type f
+          SRCS=$(find . -not -path "./.git/*" \( -name "*.c" -o -name "*.m" \))
           echo "=== Sources ===" && echo "$SRCS"
+          INCS=$(find . -not -path "./.git/*" -name "*.h" -exec dirname {} \; | sort -u)
+          IFLAGS=""
+          for inc in $INCS; do IFLAGS="$IFLAGS -I$inc"; done
+          echo "=== Include flags ===" && echo "$IFLAGS"
+          COMPILED=0
           for src in $SRCS; do
             out="${src%.*}.arm64.o"
             xcrun clang \
               -target arm64-apple-ios15.0 \
               -isysroot "$SDK" \
-              -I./include \
-              -I./src \
-              -I. \
-              -O2 -c "$src" -o "$out" && echo "OK: $src" || echo "FAIL: $src"
+              $IFLAGS \
+              -O2 -c "$src" -o "$out" \
+              && echo "OK: $src" && COMPILED=$((COMPILED+1)) \
+              || echo "FAIL: $src"
           done
-          OBJS=$(find . -name "*.arm64.o" | grep -v ".git")
-          if [ -z "$OBJS" ]; then
-            echo "ERROR: no objects compiled"
+          echo "=== Compiled $COMPILED files ==="
+          if [ "$COMPILED" -eq 0 ]; then
+            echo "ERROR: nothing compiled"
             exit 1
           fi
-          echo "=== Objects ===" && echo "$OBJS"
+          OBJS=$(find . -not -path "./.git/*" -name "*.arm64.o")
           xcrun ar rcs libTitan.a $OBJS
           cp libTitan.a $GITHUB_WORKSPACE/TrollInstallerX/External/lib/
           mkdir -p $GITHUB_WORKSPACE/TrollInstallerX/External/include/Titan
-          find . -name "*.h" | grep -v ".git" | xargs -I{} cp {} \
+          find . -not -path "./.git/*" -name "*.h" | xargs -I{} cp {} \
             $GITHUB_WORKSPACE/TrollInstallerX/External/include/Titan/
           echo "=== Titan build complete ==="
 
@@ -74,28 +79,35 @@ jobs:
         run: |
           cd /tmp/momentarius
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
-          SRCS=$(find ./src -name "*.c" -o -name "*.m")
+          echo "=== Full tree ===" && find . -not -path "./.git/*" -type f
+          SRCS=$(find . -not -path "./.git/*" \( -name "*.c" -o -name "*.m" \))
           echo "=== Sources ===" && echo "$SRCS"
+          INCS=$(find . -not -path "./.git/*" -name "*.h" -exec dirname {} \; | sort -u)
+          IFLAGS=""
+          for inc in $INCS; do IFLAGS="$IFLAGS -I$inc"; done
+          echo "=== Include flags ===" && echo "$IFLAGS"
+          COMPILED=0
           for src in $SRCS; do
             out="${src%.*}.arm64.o"
             xcrun clang \
               -target arm64-apple-ios15.0 \
               -isysroot "$SDK" \
-              -I./include \
-              -I./src \
-              -I. \
-              -O2 -c "$src" -o "$out" && echo "OK: $src" || echo "FAIL: $src"
+              $IFLAGS \
+              -O2 -c "$src" -o "$out" \
+              && echo "OK: $src" && COMPILED=$((COMPILED+1)) \
+              || echo "FAIL: $src"
           done
-          OBJS=$(find ./src -name "*.arm64.o")
-          if [ -z "$OBJS" ]; then
-            echo "ERROR: no objects compiled"
+          echo "=== Compiled $COMPILED files ==="
+          if [ "$COMPILED" -eq 0 ]; then
+            echo "ERROR: nothing compiled"
             exit 1
           fi
-          echo "=== Objects ===" && echo "$OBJS"
+          OBJS=$(find . -not -path "./.git/*" -name "*.arm64.o")
           xcrun ar rcs libmomentarius.a $OBJS
           cp libmomentarius.a $GITHUB_WORKSPACE/TrollInstallerX/External/lib/
           mkdir -p $GITHUB_WORKSPACE/TrollInstallerX/External/include/Momentarius
-          cp ./include/*.h $GITHUB_WORKSPACE/TrollInstallerX/External/include/Momentarius/
+          find . -not -path "./.git/*" -name "*.h" | xargs -I{} cp {} \
+            $GITHUB_WORKSPACE/TrollInstallerX/External/include/Momentarius/
           echo "=== Momentarius build complete ==="
 
       - name: Generate Xcode project
