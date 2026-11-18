@@ -40,15 +40,24 @@ jobs:
         run: |
           cd /tmp/Titan
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
-          LJB=$GITHUB_WORKSPACE/TrollInstallerX/External/include
-          LJB2=$GITHUB_WORKSPACE/TrollInstallerX/Exploitation/libjailbreak
+          LJB=$GITHUB_WORKSPACE/TrollInstallerX/Exploitation/libjailbreak
+          EXT=$GITHUB_WORKSPACE/TrollInstallerX/External/include
+          # Write umbrella header
+          cat > /tmp/libjailbreak_umbrella.h << 'EOF'
+          #include "primitives.h"
+          #include "primitives_external.h"
+          #include "info.h"
+          #include "util.h"
+          #include "kernel.h"
+          #include "translation.h"
+          #include "pte.h"
+          EOF
           echo "=== Full tree ===" && find . -not -path "./.git/*" -type f
           SRCS=$(find . -not -path "./.git/*" \( -name "*.c" -o -name "*.m" \))
           echo "=== Sources ===" && echo "$SRCS"
           INCS=$(find . -not -path "./.git/*" -name "*.h" -exec dirname {} \; | sort -u)
-          IFLAGS="-I$LJB -I$LJB2"
+          IFLAGS="-I$LJB -I$EXT"
           for inc in $INCS; do IFLAGS="$IFLAGS -I$inc"; done
-          echo "=== Include flags ===" && echo "$IFLAGS"
           COMPILED=0
           for src in $SRCS; do
             out="${src%.*}.arm64.o"
@@ -56,6 +65,7 @@ jobs:
               -target arm64-apple-ios15.0 \
               -isysroot "$SDK" \
               $IFLAGS \
+              -include /tmp/libjailbreak_umbrella.h \
               -O2 -c "$src" -o "$out" \
               && echo "OK: $src" && COMPILED=$((COMPILED+1)) \
               || echo "FAIL: $src"
@@ -81,15 +91,24 @@ jobs:
         run: |
           cd /tmp/momentarius
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
-          LJB=$GITHUB_WORKSPACE/TrollInstallerX/External/include
-          LJB2=$GITHUB_WORKSPACE/TrollInstallerX/Exploitation/libjailbreak
+          LJB=$GITHUB_WORKSPACE/TrollInstallerX/Exploitation/libjailbreak
+          EXT=$GITHUB_WORKSPACE/TrollInstallerX/External/include
+          # Write umbrella header
+          cat > /tmp/libjailbreak_umbrella.h << 'EOF'
+          #include "primitives.h"
+          #include "primitives_external.h"
+          #include "info.h"
+          #include "util.h"
+          #include "kernel.h"
+          #include "translation.h"
+          #include "pte.h"
+          EOF
           echo "=== Full tree ===" && find . -not -path "./.git/*" -type f
           SRCS=$(find . -not -path "./.git/*" \( -name "*.c" -o -name "*.m" \))
           echo "=== Sources ===" && echo "$SRCS"
           INCS=$(find . -not -path "./.git/*" -name "*.h" -exec dirname {} \; | sort -u)
-          IFLAGS="-I$LJB -I$LJB2"
+          IFLAGS="-I$LJB -I$EXT"
           for inc in $INCS; do IFLAGS="$IFLAGS -I$inc"; done
-          echo "=== Include flags ===" && echo "$IFLAGS"
           COMPILED=0
           for src in $SRCS; do
             out="${src%.*}.arm64.o"
@@ -97,6 +116,7 @@ jobs:
               -target arm64-apple-ios15.0 \
               -isysroot "$SDK" \
               $IFLAGS \
+              -include /tmp/libjailbreak_umbrella.h \
               -O2 -c "$src" -o "$out" \
               && echo "OK: $src" && COMPILED=$((COMPILED+1)) \
               || echo "FAIL: $src"
