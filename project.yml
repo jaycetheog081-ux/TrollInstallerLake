@@ -66,6 +66,8 @@ targets:
           - "-lxpf"
           - "-lpartial"
           - "-lgrabkernel2"
+          - "-lTitan"
+          - "-lmomentarius"
         SWIFT_VERSION: "5.0"
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
